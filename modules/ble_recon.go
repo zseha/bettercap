@@ -87,6 +87,27 @@ func NewBLERecon(s *session.Session) *BLERecon {
 			return d.writeBuffer(mac, uuid, data)
 		}))
 
+	d.AddHandler(session.NewModuleHandler("ble.read MAC UUID", "ble.read "+network.BLEMacValidator+" ([a-fA-F0-9]+)",
+		"Read value from the BLE device with specified MAC address, from the characteristic specified with UUID.",
+		func(args []string) error {
+			mac := network.NormalizeMac(args[0])
+			uuid, err := gatt.ParseUUID(args[1])
+			if err != nil {
+				return fmt.Errorf("Error parsing %s: %s", args[1], err)
+			}
+			return d.readCharacteristic(mac, uuid)
+		}))
+	d.AddHandler(session.NewModuleHandler("ble.awaitNotification MAC UUID", "ble.awaitNotification "+network.BLEMacValidator+" ([a-fA-F0-9]+)",
+		"Await notification/indication from the BLE device with specified MAC address, from the characteristic specified with UUID.",
+		func(args []string) error {
+			mac := network.NormalizeMac(args[0])
+			uuid, err := gatt.ParseUUID(args[1])
+			if err != nil {
+				return fmt.Errorf("Error parsing %s: %s", args[1], err)
+			}
+			return d.awaitNotification(mac, uuid)
+		}))
+
 	return d
 }
 
@@ -177,6 +198,15 @@ func (d *BLERecon) setCurrentDevice(dev *network.BLEDevice) {
 func (d *BLERecon) writeBuffer(mac string, uuid gatt.UUID, data []byte) error {
 	d.writeUUID = &uuid
 	d.writeData = data
+	return d.enumAllTheThings(mac)
+}
+
+func (d *BLERecon) readCharacteristic(mac string, uuid gatt.UUID) error {
+	fmt.Printf("Trying to read value from char")
+	return d.enumAllTheThings(mac)
+}
+func (d *BLERecon) awaitNotification(mac string, uuid gatt.UUID) error {
+	fmt.Printf("Trying to await value from char")
 	return d.enumAllTheThings(mac)
 }
 
